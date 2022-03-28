@@ -48,6 +48,7 @@ import org.catrobat.catroid.common.ProjectData
 import org.catrobat.catroid.common.SharedPreferenceKeys
 import org.catrobat.catroid.content.backwardcompatibility.ProjectMetaDataParser
 import org.catrobat.catroid.exceptions.LoadingProjectException
+import org.catrobat.catroid.io.ProjectFileImporter
 import org.catrobat.catroid.io.StorageOperations
 import org.catrobat.catroid.io.XstreamSerializer
 import org.catrobat.catroid.io.asynctask.ProjectCopier
@@ -70,23 +71,14 @@ import org.catrobat.catroid.utils.ToastUtil
 import org.koin.android.ext.android.inject
 import java.io.File
 import java.io.IOException
-import java.util.ArrayList
 
 @SuppressLint("NotifyDataSetChanged")
 class ProjectListFragment : RecyclerViewFragment<ProjectData?>(), ProjectLoadListener {
-    private var filesForUnzipAndImportTask: ArrayList<File>? = null
-    private var hasUnzipAndImportTaskFinished = false
-    private var filesForImportTask: ArrayList<File>? = null
-    private var hasImportTaskFinished = false
 
     private val projectManager: ProjectManager by inject()
 
     override fun onActivityCreated(savedInstance: Bundle?) {
         super.onActivityCreated(savedInstance)
-        filesForImportTask = ArrayList()
-        filesForUnzipAndImportTask = ArrayList()
-        hasUnzipAndImportTaskFinished = true
-        hasImportTaskFinished = true
         if (arguments != null) {
             importProject(requireArguments().getParcelable("intent"))
         }
@@ -96,57 +88,44 @@ class ProjectListFragment : RecyclerViewFragment<ProjectData?>(), ProjectLoadLis
         }
     }
 
-    private fun onImportProjectFinished(success: Boolean) {
+    //Refactor!
+    private fun onImportProjectFinished(success: Boolean, count: Int) {
         setAdapterItems(adapter.projectsSorted)
-        if (!success) {
-            ToastUtil.showError(requireContext(), R.string.error_import_project)
-        } else {
+
+        if (success) {
             ToastUtil.showSuccess(
-                requireContext(),
-                resources.getQuantityString(
-                    R.plurals.imported_projects,
-                    filesForUnzipAndImportTask?.size ?: 0,
-                    filesForUnzipAndImportTask?.size ?: 0
-                )
-            )
+                activity,
+                resources.getQuantityString(R.plurals.imported_projects, count, count))
+        } else {
+            ToastUtil.showError(context, R.string.error_import_project)
         }
-        filesForUnzipAndImportTask?.clear()
+
         setShowProgressBar(false)
     }
 
+    //Refactor!
     private fun onRenameFinished(success: Boolean) {
         if (success) {
-            if (hasImportTaskFinished && hasUnzipAndImportTaskFinished) {
-                ToastUtil.showSuccess(
-                    requireContext(),
-                    getString(R.string.renamed_project)
-                )
-                filesForUnzipAndImportTask?.clear()
-            }
             setAdapterItems(adapter.projectsSorted)
         } else {
-            ToastUtil.showError(requireContext(), R.string.error_rename_incompatible_project)
+            ToastUtil.showError(context, R.string.error_rename_incompatible_project)
         }
+
         setShowProgressBar(false)
     }
 
     private val projectImportListener = object : ProjectImportListener {
-        override fun onImportFinished(success: Boolean) {
-            hasImportTaskFinished = true
+        override fun onImportFinished(success: Boolean, count: Int) {
             setAdapterItems(adapter.projectsSorted)
-            if (hasImportTaskFinished && hasUnzipAndImportTaskFinished) {
+
+            if (success) {
                 ToastUtil.showSuccess(
-                    requireContext(),
-                    resources.getQuantityString(
-                        R.plurals.imported_projects,
-                        filesForImportTask?.size ?: 0,
-                        filesForImportTask?.size ?: 0
-                    )
-                )
-                filesForImportTask?.clear()
+                    activity,
+                    resources.getQuantityString(R.plurals.imported_projects, count, count))
             } else {
-                ToastUtil.showError(requireContext(), R.string.error_import_project)
+                ToastUtil.showError(context, R.string.error_import_project)
             }
+
             setShowProgressBar(false)
         }
     }
@@ -297,23 +276,25 @@ class ProjectListFragment : RecyclerViewFragment<ProjectData?>(), ProjectLoadLis
     }
 
     private fun importProjectUris(uris: ArrayList<Uri>) {
-        prepareFilesForImport(uris)
-        filesForImportTask?.apply {
-            if (isNotEmpty()) {
-                val filesToImport = filesForImportTask?.toList() ?: listOf()
-                ProjectImportTask(filesToImport).setListener(projectImportListener).execute()
-            }
+        val projectsToImport = ProjectFileImporter(
+            Constants.CACHE_DIR,
+            requireActivity().contentResolver, uris
+        )
+
+        if (projectsToImport.getDirectories().isNotEmpty()) {
+            ProjectImportTask(projectsToImport.getDirectories().toList())
+                .setListener(projectImportListener)
+                .execute()
         }
-        filesForUnzipAndImportTask?.apply {
-            if (isNotEmpty()) {
-                val filesToUnzipAndImport = filesForUnzipAndImportTask?.toTypedArray() ?: arrayOf()
-                ProjectUnZipperAndImporter({ success: Boolean -> onImportProjectFinished(success) })
-                    .unZipAndImportAsync(filesToUnzipAndImport)
-            }
+
+        if (projectsToImport.getZippedFiles().isNotEmpty()) {
+            ProjectUnZipperAndImporter()
+                .unZipAndImportAsync(projectsToImport.getZippedFiles(),
+                                     this::onImportProjectFinished);
         }
     }
 
-    private fun prepareFilesForImport(urisToImport: ArrayList<Uri>) {
+    private fun prepareFilesForImport(urisToImport: java.util.ArrayList<Uri>) {
         for (uri in urisToImport) {
             val contentResolver = requireActivity().contentResolver
             var fileName = StorageOperations.resolveFileName(contentResolver, uri)
@@ -329,8 +310,8 @@ class ProjectListFragment : RecyclerViewFragment<ProjectData?>(), ProjectLoadLis
                 val filePath = uri.path ?: return
                 val src = File(filePath)
                 if (src.isDirectory) {
-                    filesForImportTask?.add(src)
-                    hasImportTaskFinished = false
+                    //filesForImportTask?.add(src)
+                    //hasImportTaskFinished = false
                 } else {
                     copyFileContentToCacheFile(uri, fileName)
                 }
@@ -343,8 +324,6 @@ class ProjectListFragment : RecyclerViewFragment<ProjectData?>(), ProjectLoadLis
             requireActivity().contentResolver, uri,
             Constants.CACHE_DIR, fileName
         )
-        filesForUnzipAndImportTask?.add(projectFile)
-        hasUnzipAndImportTaskFinished = false
     }
 
     override fun prepareActionMode(@ActionModeType type: Int) {

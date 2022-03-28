@@ -32,39 +32,50 @@ import org.catrobat.catroid.io.StorageOperations
 import org.catrobat.catroid.io.ZipArchiver
 import java.io.File
 import java.io.IOException
+import java.lang.ref.WeakReference
 
 private val TAG = ProjectUnZipperAndImporter::class.java.simpleName
 
-class ProjectUnZipperAndImporter @JvmOverloads constructor(
-    val onImportFinished: (Boolean) -> Unit = {},
-    val scope: CoroutineScope = CoroutineScope(Dispatchers.IO)
-) {
-    fun unZipAndImportAsync(files: Array<File>) {
+class ProjectUnZipperAndImporter
+{
+    private var success: Boolean = true
+    private var count: Int = 0
+    private var scope: CoroutineScope = CoroutineScope(Dispatchers.IO)
+
+    fun unZipAndImportAsync(files: Array<File>,
+        onImportFinished: (Boolean, Int) -> Unit) {
+
+        val onCompleteWeakRef = WeakReference(onImportFinished)
+
         scope.launch {
-            val success = unzipAndImportProjects(files)
+            //unzipAndImportProjects(files)
+            count = 10
+            success = true
             withContext(Dispatchers.Main) {
-                onImportFinished(success)
+                onCompleteWeakRef.get()?.invoke(success, count)
             }
         }
     }
-}
 
-fun unzipAndImportProjects(files: Array<File>): Boolean {
-    var success = true
-    files.forEach { projectDir ->
-        success = success && unzipAndImportProject(projectDir)
+    fun unzipAndImportProjects(files: Array<File>): Boolean {
+        success = true
+        files.forEach { projectDir ->
+            success = success && unzipAndImportProject(projectDir)
+            count++
+        }
+        return success
     }
-    return success
-}
 
-private fun unzipAndImportProject(projectDir: File): Boolean = try {
-    val cachedProjectDir = File(CACHE_DIR, StorageOperations.getSanitizedFileName(projectDir.name))
-    if (cachedProjectDir.isDirectory) {
-        StorageOperations.deleteDir(cachedProjectDir)
+    private fun unzipAndImportProject(projectDir: File): Boolean = try {
+        val cachedProjectDir = File(CACHE_DIR, StorageOperations.getSanitizedFileName(projectDir.name))
+        if (cachedProjectDir.isDirectory) {
+            StorageOperations.deleteDir(cachedProjectDir)
+        }
+        ZipArchiver().unzip(projectDir, cachedProjectDir)
+        //ProjectImportTask(listOf(cachedProjectDir)).task()
+        true
+    } catch (e: IOException) {
+        Log.e(TAG, "Cannot unzip project " + projectDir.name, e)
+        false
     }
-    ZipArchiver().unzip(projectDir, cachedProjectDir)
-    ProjectImportTask.task(listOf(cachedProjectDir))
-} catch (e: IOException) {
-    Log.e(TAG, "Cannot unzip project " + projectDir.name, e)
-    false
 }

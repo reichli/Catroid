@@ -24,15 +24,13 @@ package org.catrobat.catroid.io.asynctask
 
 import android.os.AsyncTask
 import android.util.Log
-
 import org.catrobat.catroid.common.Constants
-import org.catrobat.catroid.content.backwardcompatibility.ProjectMetaDataParser
-import org.catrobat.catroid.ui.recyclerview.util.UniqueNameProvider
-import org.catrobat.catroid.utils.FileMetaDataExtractor
 import org.catrobat.catroid.common.FlavoredConstants
+import org.catrobat.catroid.content.backwardcompatibility.ProjectMetaDataParser
 import org.catrobat.catroid.io.StorageOperations
 import org.catrobat.catroid.io.XstreamSerializer
-
+import org.catrobat.catroid.ui.recyclerview.util.UniqueNameProvider
+import org.catrobat.catroid.utils.FileMetaDataExtractor
 import java.io.File
 import java.io.IOException
 import java.lang.ref.WeakReference
@@ -40,6 +38,7 @@ import java.lang.ref.WeakReference
 class ProjectImportTask(private val filesToImport: List<File>) :
     AsyncTask<Void, Boolean?, Boolean>() {
     private var weakListenerReference: WeakReference<ProjectImportListener>? = null
+    private var count = 0
 
     fun setListener(listener: ProjectImportListener): ProjectImportTask {
         weakListenerReference = WeakReference(listener)
@@ -53,24 +52,25 @@ class ProjectImportTask(private val filesToImport: List<File>) :
             return
         }
         val listener = weakListenerReference?.get()
-        listener?.onImportFinished(success)
+        listener?.onImportFinished(success, count)
     }
 
     interface ProjectImportListener {
-        fun onImportFinished(success: Boolean)
+        fun onImportFinished(success: Boolean, count: Int)
+    }
+
+    fun task(files: List<File?>): Boolean {
+        var success = true
+        for (projectDir in files) {
+            projectDir ?: continue
+            success = success && importProject(projectDir)
+            count++
+        }
+        return success
     }
 
     companion object {
         val TAG: String = ProjectImportTask::class.java.simpleName
-
-        fun task(files: List<File?>): Boolean {
-            var success = true
-            for (projectDir in files) {
-                projectDir ?: continue
-                success = success && importProject(projectDir)
-            }
-            return success
-        }
 
         private fun importProject(projectDir: File): Boolean {
             var projectName = getProjectName(projectDir) ?: return false
