@@ -48,12 +48,6 @@ import dalvik.system.DexFile;
 public class AndroidPackageRunner extends ParentRunner<Runner> {
 	private static final String TAG = AndroidPackageRunner.class.getSimpleName();
 
-	@Retention(RetentionPolicy.RUNTIME)
-	@Target(ElementType.TYPE)
-	@Inherited
-	public @interface PackagePath {
-		String value();
-	}
 
 	private static Class<?>[] getAllClassesInAnnotatedPath(Class<?> klass) throws InitializationError {
 		PackagePath annotation = klass.getAnnotation(PackagePath.class);

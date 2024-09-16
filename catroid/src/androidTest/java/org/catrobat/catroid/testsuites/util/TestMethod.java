@@ -1,6 +1,6 @@
 /*
  * Catroid: An on-device visual programming system for Android devices
- * Copyright (C) 2010-2022 The Catrobat Team
+ * Copyright (C) 2010-2024 The Catrobat Team
  * (<http://developer.catrobat.org/credits>)
  *
  * This program is free software: you can redistribute it and/or modify
@@ -21,13 +21,45 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package org.catrobat.catroid.testsuites;
+package org.catrobat.catroid.testsuites.util;
 
-import org.catrobat.catroid.runner.AndroidPackageRunner;
-import org.catrobat.catroid.runner.PackagePath;
-import org.junit.runner.RunWith;
+import java.lang.reflect.Method;
 
-@RunWith(AndroidPackageRunner.class)
-@PackagePath("org.catrobat.catroid.test")
-public class AllHeadlessTestsSuite {
+public class TestMethod {
+	private final Class<?> testClass;
+	private final Method testMethod;
+
+	private Method before;
+	private Method after;
+
+	public TestMethod(Class<?> testClass, Method testMethod) {
+		this.testClass = testClass;
+		this.testMethod = testMethod;
+		this.before = null;
+		this.after = null;
+	}
+
+	public Class<?> getTestClass() {
+		return testClass;
+	}
+
+	public Method getTestMethod() {
+		return testMethod;
+	}
+
+	public String getMethodName() {
+		return testMethod.getName();
+	}
+
+	public Method getBefore() { return before;}
+
+	public Method getAfter() { return after;}
+
+	public void setBefore(Method before) {
+		this.before = before;
+	}
+
+	public void setAfter(Method after) {
+		this.after = after;
+	}
 }

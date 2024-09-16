@@ -1,6 +1,6 @@
 /*
  * Catroid: An on-device visual programming system for Android devices
- * Copyright (C) 2010-2022 The Catrobat Team
+ * Copyright (C) 2010-2024 The Catrobat Team
  * (<http://developer.catrobat.org/credits>)
  *
  * This program is free software: you can redistribute it and/or modify
@@ -21,13 +21,35 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package org.catrobat.catroid.testsuites;
+package org.catrobat.catroid.runner;
 
-import org.catrobat.catroid.runner.AndroidPackageRunner;
-import org.catrobat.catroid.runner.PackagePath;
-import org.junit.runner.RunWith;
+import org.junit.runners.BlockJUnit4ClassRunner;
+import org.junit.runners.model.FrameworkMethod;
+import org.junit.runners.model.InitializationError;
 
-@RunWith(AndroidPackageRunner.class)
-@PackagePath("org.catrobat.catroid.test")
-public class AllHeadlessTestsSuite {
+import java.util.ArrayList;
+import java.util.List;
+
+public class FilteredBlockJUnit4ClassRunner extends BlockJUnit4ClassRunner {
+
+	List<String> methods;
+
+	public FilteredBlockJUnit4ClassRunner(Class<?> testClass, List<String> methods) throws InitializationError {
+		super(testClass);
+		this.methods = methods;
+	}
+
+	@Override
+	protected List<FrameworkMethod> getChildren() {
+		List<FrameworkMethod> allMethods = super.getChildren();
+		List<FrameworkMethod> filteredMethods = new ArrayList<>();
+
+		for (FrameworkMethod method : allMethods) {
+			if (methods.contains(method.getName())) {
+				filteredMethods.add(method);
+			}
+		}
+
+		return filteredMethods;
+	}
 }

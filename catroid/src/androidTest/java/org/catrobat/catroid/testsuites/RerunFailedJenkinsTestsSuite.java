@@ -1,6 +1,6 @@
 /*
  * Catroid: An on-device visual programming system for Android devices
- * Copyright (C) 2010-2022 The Catrobat Team
+ * Copyright (C) 2010-2024 The Catrobat Team
  * (<http://developer.catrobat.org/credits>)
  *
  * This program is free software: you can redistribute it and/or modify
@@ -23,11 +23,23 @@
 
 package org.catrobat.catroid.testsuites;
 
-import org.catrobat.catroid.runner.AndroidPackageRunner;
+import org.catrobat.catroid.runner.FailedTests;
 import org.catrobat.catroid.runner.PackagePath;
+import org.catrobat.catroid.runner.SelectiveTestRunner;
 import org.junit.runner.RunWith;
 
-@RunWith(AndroidPackageRunner.class)
-@PackagePath("org.catrobat.catroid.test")
-public class AllHeadlessTestsSuite {
+@RunWith(SelectiveTestRunner.class)
+@PackagePath("org.catrobat.catroid.uiespress")
+@FailedTests("FormulaEditorFragmentTest.testUndo\n"
+		+ "StagePausedTest.testIgnoreTouchEventsWhenStagePaused\n"
+		+ "MergeLocalSpriteTest.abortImportWithConflicts\n"
+		+ "MergeLocalSpriteTest.importObjectAndMergeGlobals\n"
+		+ "MergeLocalSpriteTest.mergeSameSpriteMultipleTimesTest\n"
+		+ "MergeLocalSpriteTest.mergeSpriteTest\n"
+		+ "ReplaceExistingProjectDialogTest.testProjectNameEmpty\n"
+		+ "CreateProjectTest.testCreateProjectInMainMenu\n"
+		+ "CreateProjectTest.testCreateProjectInProjectList\n"
+		+ "FormulaEditorFragmentActivityRecreateRegressionTest.testActivityRecreateDataFragment\n"
+		+ "CameraResourceTest.cameraOnTest")
+public class RerunFailedJenkinsTestsSuite {
 }
