@@ -64,7 +64,7 @@ class CatrobatTestRunner {
     var assetName: String = ""
 
     companion object {
-        private const val TEST_ASSETS_ROOT = "catrobatTests"
+        public const val TEST_ASSETS_ROOT = "catrobatTests"
         private const val TIMEOUT = 10_000
 
         @JvmStatic
