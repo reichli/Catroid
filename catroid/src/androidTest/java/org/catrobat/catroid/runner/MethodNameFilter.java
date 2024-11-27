@@ -23,33 +23,40 @@
 
 package org.catrobat.catroid.runner;
 
-import org.junit.runners.BlockJUnit4ClassRunner;
-import org.junit.runners.model.FrameworkMethod;
-import org.junit.runners.model.InitializationError;
+import android.util.Log;
 
-import java.util.ArrayList;
+import org.junit.runner.Description;
+import org.junit.runner.manipulation.Filter;
+
 import java.util.List;
 
-public class FilteredBlockJUnit4ClassRunner extends BlockJUnit4ClassRunner {
+public class MethodNameFilter extends Filter {
+	private List<List<String>> methodNames;
 
-	List<String> methods;
-
-	public FilteredBlockJUnit4ClassRunner(Class<?> testClass, List<String> methods) throws InitializationError {
-		super(testClass);
-		this.methods = methods;
+	public MethodNameFilter(List<List<String>> methodNames)	{
+		super();
+		this.methodNames = methodNames;
 	}
 
 	@Override
-	protected List<FrameworkMethod> getChildren() {
-		List<FrameworkMethod> allMethods = super.getChildren();
-		List<FrameworkMethod> filteredMethods = new ArrayList<>();
+	public boolean shouldRun(Description description) {
+		String methodName = description.getMethodName();
+		int paramIndex = methodName.indexOf("[");
+		if (paramIndex != -1) {
+			methodName = methodName.replace(methodName.substring(paramIndex), "");
+		}
+		Log.i("FLAKY-TESTS", "filter for test: " + methodName);
 
-		for (FrameworkMethod method : allMethods) {
-			if (methods.contains(method.getName())) {
-				filteredMethods.add(method);
+		for (List<String> methodToRun : this.methodNames)	{
+			if (methodToRun.get(0).equalsIgnoreCase(methodName)) {
+				return true;
 			}
 		}
+		return false;
+	}
 
-		return filteredMethods;
+	@Override
+	public String describe() {
+		return "custom method name filter";
 	}
 }

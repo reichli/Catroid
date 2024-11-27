@@ -25,21 +25,15 @@ package org.catrobat.catroid.testsuites;
 
 import org.catrobat.catroid.runner.FailedTests;
 import org.catrobat.catroid.runner.PackagePath;
-import org.catrobat.catroid.runner.SelectiveTestRunner;
+import org.catrobat.catroid.runner.FilteredTestRunner;
 import org.junit.runner.RunWith;
 
-@RunWith(SelectiveTestRunner.class)
+@RunWith(FilteredTestRunner.class)
 @PackagePath("org.catrobat.catroid.uiespress")
 @FailedTests("FormulaEditorFragmentTest.testUndo\n"
 		+ "StagePausedTest.testIgnoreTouchEventsWhenStagePaused\n"
-		+ "MergeLocalSpriteTest.abortImportWithConflicts\n"
-		+ "MergeLocalSpriteTest.importObjectAndMergeGlobals\n"
-		+ "MergeLocalSpriteTest.mergeSameSpriteMultipleTimesTest\n"
-		+ "MergeLocalSpriteTest.mergeSpriteTest\n"
-		+ "ReplaceExistingProjectDialogTest.testProjectNameEmpty\n"
-		+ "CreateProjectTest.testCreateProjectInMainMenu\n"
-		+ "CreateProjectTest.testCreateProjectInProjectList\n"
-		+ "FormulaEditorFragmentActivityRecreateRegressionTest.testActivityRecreateDataFragment\n"
-		+ "CameraResourceTest.cameraOnTest")
+		+ "VisualPlacementBrickTest.testIsVisualPlacementShownForEditTextX[GlideToBrick]\n"
+		+ "VisualPlacementBrickTest.testIsVisualPlacementActivityShownInFormulaFragment"
+		+ "[ShowTextBrick]")
 public class RerunFailedJenkinsTestsSuite {
 }

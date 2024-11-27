@@ -26,8 +26,11 @@ package org.catrobat.catroid.runner;
 import android.util.Log;
 
 import org.junit.runner.Description;
+import org.junit.runner.RunWith;
+import org.junit.runner.manipulation.Filter;
 import org.junit.runner.notification.RunNotifier;
 import org.junit.runners.BlockJUnit4ClassRunner;
+import org.junit.runners.Parameterized;
 import org.junit.runners.ParentRunner;
 import org.junit.runners.model.InitializationError;
 
@@ -36,20 +39,21 @@ import java.util.Dictionary;
 import java.util.Enumeration;
 import java.util.Hashtable;
 import java.util.List;
+import java.util.Objects;
 
 import androidx.test.platform.app.InstrumentationRegistry;
 import dalvik.system.DexFile;
 
-public class SelectiveTestRunner extends ParentRunner<BlockJUnit4ClassRunner> {
+public class FilteredTestRunner extends ParentRunner<ParentRunner> {
 
-	private static final String TAG = SelectiveTestRunner.class.getSimpleName();
+	private static final String TAG = FilteredTestRunner.class.getSimpleName();
 
-	private final Dictionary<String, List<String>> tests;
-	private final List<BlockJUnit4ClassRunner> children;
+	private final Dictionary<String, List<List<String>>> tests;
+	private final List<ParentRunner> children;
 	private PackagePath pathAnnotation;
 	private FailedTests failedTestsAnnotation;
 
-	public SelectiveTestRunner(Class<?> suite) throws InitializationError {
+	public FilteredTestRunner(Class<?> suite) throws InitializationError {
 		super(suite);
 		setAnnotations(suite);
 		this.tests = getTestMethodsToRun();
@@ -72,28 +76,36 @@ public class SelectiveTestRunner extends ParentRunner<BlockJUnit4ClassRunner> {
 		}
 	}
 
-	private Dictionary<String, List<String>> getTestMethodsToRun() {
-		Dictionary<String, List<String>> tests = new Hashtable<>();
+	private Dictionary<String, List<List<String>>> getTestMethodsToRun() {
+		Dictionary<String, List<List<String>>> tests = new Hashtable<>();
 
 		for (String test : failedTestsAnnotation.value().split("\n")) {
 			String[] parts = test.split("\\.");
 			String className = parts[0];
-			String methodName = parts[1];
+			List<String> methodData;
+			if (parts[1].contains("[")) {
+				String[] methodParts = parts[1].split("\\[");
+				methodData = List.of(
+						methodParts[0], methodParts[1].replace("]", ""));
+			} else {
+				methodData = List.of(parts[1]);
+			}
 
-			List<String> testMethods = tests.get(className);
+			List<List<String>> testMethods = tests.get(className);
 			if (testMethods == null) {
 				testMethods = new ArrayList<>();
 				tests.put(className, testMethods);
 			}
-			testMethods.add(methodName);
+			testMethods.add(methodData);
 		}
 
 		Enumeration<String> iter = tests.keys();
 		while (iter.hasMoreElements()) {
 			String className = iter.nextElement();
-			String methodNames = tests.get(className)
+			String methodNames = Objects.requireNonNull(tests.get(className))
 					.stream()
-					.reduce("", (accum, n) -> accum = accum + ", " + n);
+					.map(l -> String.join("-", l))
+					.reduce("", (accum, n) -> accum + ", " + n);
 
 			Log.i("FLAKY-TESTS", className + ": " + methodNames);
 		}
@@ -101,8 +113,8 @@ public class SelectiveTestRunner extends ParentRunner<BlockJUnit4ClassRunner> {
 		return tests;
 	}
 
-	private List<BlockJUnit4ClassRunner> getChildRunners() throws InitializationError {
-		List<BlockJUnit4ClassRunner> runners = new ArrayList<>();
+	private List<ParentRunner> getChildRunners() throws InitializationError {
+		List<ParentRunner> runners = new ArrayList<>();
 
 		try {
 			String packageCodePath =
@@ -119,19 +131,24 @@ public class SelectiveTestRunner extends ParentRunner<BlockJUnit4ClassRunner> {
 						&& className.endsWith("Test")
 						&& tests.get(className) != null) {
 
-					Log.i("FLAKY-TESTS", fullyQualifiedClassName);
-					Log.i("FLAKY-TESTS", className);
+					Log.i("FLAKY-TESTS", "test class matched: "
+							+ fullyQualifiedClassName + " - " + className);
 
-					List<String> methods = tests.get(className);
+					List<List<String>> methods = tests.get(className);
 
 					Class<?> testClass = Class.forName(fullyQualifiedClassName);
-					FilteredBlockJUnit4ClassRunner runner = new FilteredBlockJUnit4ClassRunner(
-							testClass, methods);
-					runners.add(runner);
+					RunWith runWithAnnotation = testClass.getAnnotation(RunWith.class);
+					if (runWithAnnotation != null && runWithAnnotation.value() == Parameterized.class) {
+						runners.add(new FilteredParameterizedRunner(testClass, methods));
+					} else {
+						BlockJUnit4ClassRunner classRunner = new BlockJUnit4ClassRunner(testClass);
+						classRunner.filter(new MethodNameFilter(methods));
+						runners.add(classRunner);
+					}
 				}
 			}
-		} catch (Exception e) {
-			Log.e(TAG, e.getMessage(), e);
+		} catch (Throwable t) {
+			Log.e(TAG, t.getMessage(), t);
 			throw new InitializationError("Exception during loading Test classes from Dex");
 		}
 
@@ -139,17 +156,17 @@ public class SelectiveTestRunner extends ParentRunner<BlockJUnit4ClassRunner> {
 	}
 
 	@Override
-	protected List<BlockJUnit4ClassRunner> getChildren() {
+	protected List<ParentRunner> getChildren() {
 		return children;
 	}
 
 	@Override
-	protected Description describeChild(BlockJUnit4ClassRunner child) {
+	protected Description describeChild(ParentRunner child) {
 		return Description.createSuiteDescription(child.getTestClass().getName());
 	}
 
 	@Override
-	protected void runChild(BlockJUnit4ClassRunner child, RunNotifier notifier) {
+	protected void runChild(ParentRunner child, RunNotifier notifier) {
 		child.run(notifier);
 	}
 }
