@@ -31,7 +31,7 @@ import org.junit.runner.manipulation.Filter;
 import java.util.List;
 
 public class MethodNameFilter extends Filter {
-	private List<List<String>> methodNames;
+	private final List<List<String>> methodNames;
 
 	public MethodNameFilter(List<List<String>> methodNames)	{
 		super();

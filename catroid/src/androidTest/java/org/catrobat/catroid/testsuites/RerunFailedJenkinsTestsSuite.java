@@ -38,6 +38,7 @@ import org.junit.runner.RunWith;
 		// RTL tests
 		+ "RTLMainMenuTest.testSetLanguageToGerman\n"
 		// CLT
+		+ "CatrobatTestRunner.run[catrobatTests/formula - testNumberOfLooks.catrobat]\n"
 		// quarantined tests
 		+ "SettingsFragmentTest.noMultipleSelectAccessibilityProfilesTest\n"
 		// parameterized

@@ -23,11 +23,7 @@
 
 package org.catrobat.catroid.runner;
 
-import android.util.Log;
-
-import org.junit.runner.Description;
 import org.junit.runner.Runner;
-import org.junit.runner.manipulation.Filter;
 import org.junit.runner.manipulation.NoTestsRemainException;
 import org.junit.runners.Parameterized;
 import org.junit.runners.parameterized.BlockJUnit4ClassRunnerWithParameters;
@@ -38,7 +34,7 @@ import java.util.stream.Collectors;
 
 public class FilteredParameterizedRunner extends Parameterized {
 
-	private List<List<String>> methods;
+	private final List<List<String>> methods;
 
 	public FilteredParameterizedRunner(Class<?> klass, List<List<String>> methods) throws Throwable {
 		super(klass);

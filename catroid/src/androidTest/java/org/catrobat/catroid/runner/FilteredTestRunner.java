@@ -82,13 +82,21 @@ public class FilteredTestRunner extends ParentRunner<ParentRunner> {
 		for (String test : failedTestsAnnotation.value().split("\n")) {
 			String[] parts = test.split("\\.");
 			String className = parts[0];
+			String methodName = parts[1];
 			List<String> methodData;
-			if (parts[1].contains("[")) {
+
+			if (methodName.contains("[")) {
 				String[] methodParts = parts[1].split("\\[");
-				methodData = List.of(
-						methodParts[0], methodParts[1].replace("]", ""));
+				methodName = methodParts[0];
+				String parameterName = methodParts[1].replace("]", "");
+
+				if (className.equalsIgnoreCase("CatrobatTestRunner")) {
+					parameterName += ".catrobat";
+				}
+
+				methodData = List.of(methodName, parameterName);
 			} else {
-				methodData = List.of(parts[1]);
+				methodData = List.of(methodName);
 			}
 
 			List<List<String>> testMethods = tests.get(className);
@@ -104,8 +112,9 @@ public class FilteredTestRunner extends ParentRunner<ParentRunner> {
 			String className = iter.nextElement();
 			String methodNames = Objects.requireNonNull(tests.get(className))
 					.stream()
-					.map(l -> String.join("-", l))
-					.reduce("", (accum, n) -> accum + ", " + n);
+					.map(l -> String.join("->", l))
+					.reduce("", (accum, n) -> accum + ", " + n)
+					.replaceFirst(",", "");
 
 			Log.i("FLAKY-TESTS", className + ": " + methodNames);
 		}
@@ -128,7 +137,8 @@ public class FilteredTestRunner extends ParentRunner<ParentRunner> {
 				String className = parts[parts.length - 1];
 
 				if (fullyQualifiedClassName.contains(pathAnnotation.value())
-						&& className.endsWith("Test")
+						&& (className.endsWith("Test") || className.equalsIgnoreCase(
+								"CatrobatTestRunner"))
 						&& tests.get(className) != null) {
 
 					Log.i("FLAKY-TESTS", "test class matched: "
