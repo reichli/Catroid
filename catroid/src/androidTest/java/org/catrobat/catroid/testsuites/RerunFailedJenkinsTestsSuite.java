@@ -29,11 +29,20 @@ import org.catrobat.catroid.runner.FilteredTestRunner;
 import org.junit.runner.RunWith;
 
 @RunWith(FilteredTestRunner.class)
-@PackagePath("org.catrobat.catroid.uiespress")
-@FailedTests("FormulaEditorFragmentTest.testUndo\n"
-		+ "StagePausedTest.testIgnoreTouchEventsWhenStagePaused\n"
-		+ "VisualPlacementBrickTest.testIsVisualPlacementShownForEditTextX[GlideToBrick]\n"
-		+ "VisualPlacementBrickTest.testIsVisualPlacementActivityShownInFormulaFragment"
-		+ "[ShowTextBrick]")
+@PackagePath("org.catrobat.catroid")
+@FailedTests(
+		// instrumented unit tests
+		"PenDownActionTest.testSaveOnePositionChange\n"
+		// pull request suite
+		+ "FormulaEditorFragmentTest.testUndo\n"
+		// RTL tests
+		+ "RTLMainMenuTest.testSetLanguageToGerman\n"
+		// CLT
+		// quarantined tests
+		+ "SettingsFragmentTest.noMultipleSelectAccessibilityProfilesTest\n"
+		// parameterized
+		+ "UndoTest.testUndoSpinnerActionVisible[SingleScript]\n"
+		+ "UndoTest.testUndoSpinnerActionVisible[CompositeBrick]\n"
+		+ "UndoTest.checkScriptAfterUndo[CompositeBrick]")
 public class RerunFailedJenkinsTestsSuite {
 }
