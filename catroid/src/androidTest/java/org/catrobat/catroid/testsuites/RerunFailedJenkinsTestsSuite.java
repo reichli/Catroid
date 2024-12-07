@@ -30,20 +30,35 @@ import org.junit.runner.RunWith;
 
 @RunWith(FilteredTestRunner.class)
 @PackagePath("org.catrobat.catroid")
-@FailedTests(
-		// instrumented unit tests
-		"PenDownActionTest.testSaveOnePositionChange\n"
-		// pull request suite
+@FailedTests("DeleteImportedSpriteTest.testDeleteOriginalAndImportedSprites\n"
+		+ "DeleteImportedSpriteTest.testOriginalLooksAndSoundsExistAfterDeleteImport\n"
+		+ "ImportObjectIntoProjectTest.abortImportWithConflictsTestLocalVar\n"
+		+ "ImportObjectIntoProjectTest.rejectProjectImportDialogTest\n"
 		+ "FormulaEditorFragmentTest.testUndo\n"
-		// RTL tests
-		+ "RTLMainMenuTest.testSetLanguageToGerman\n"
-		// CLT
-		+ "CatrobatTestRunner.run[catrobatTests/formula - testNumberOfLooks.catrobat]\n"
-		// quarantined tests
-		+ "SettingsFragmentTest.noMultipleSelectAccessibilityProfilesTest\n"
-		// parameterized
-		+ "UndoTest.testUndoSpinnerActionVisible[SingleScript]\n"
-		+ "UndoTest.testUndoSpinnerActionVisible[CompositeBrick]\n"
-		+ "UndoTest.checkScriptAfterUndo[CompositeBrick]")
+		+ "StagePausedTest.testIgnoreTouchEventsWhenStagePaused\n"
+		+ "SettingsFragmentTest.basicSettingsTest\n"
+		+ "AddNewActorOrLookDialogTest.addActorOrObjectDialogTest\n"
+		+ "ImportLocalSpriteTest.abortImportWithConflicts\n"
+		+ "ImportLocalSpriteTest.importObjectAndMergeGlobals\n"
+		+ "ReplaceExistingProjectDialogTest.testProjectNameEmpty\n"
+		+ "CreateProjectTest.testCreateNewCastProject\n"
+		+ "CreateProjectTest.testCreateProjectInMainMenu\n"
+		+ "CreateProjectTest.testCreateProjectInProjectList\n"
+		+ "FormulaEditorFragmentActivityRecreateRegressionTest.testActivityRecreateDataFragment\n"
+		+ "PhiroColorBrickFormulaTest.testPhiroLightRGBShowFormulaEditor[minusTest]\n"
+		+ "PhiroColorBrickFormulaTest.testPhiroLightRGBShowFormulaEditor[plusTest]\n"
+		+ "PhiroColorBrickNumberTest.testPhiroLightRGBShowDialog[allZeroParametersTest]\n"
+		+ "PhiroColorBrickNumberTest.testPhiroLightRGBShowDialog[negativeParametersTest]\n"
+		+ "PhiroColorBrickNumberTest.testPhiroLightRGBShowDialog[positiveParametersTest]\n"
+		+ "SetPenColorBrickFormulaTest.testPhiroLightRGBShowFormulaEditor[minusTest]\n"
+		+ "SetPenColorBrickFormulaTest.testPhiroLightRGBShowFormulaEditor[plusTest]\n"
+		+ "SetPenColorBrickNumberTest.testPenColorShowDialog[allZeroParametersTest]\n"
+		+ "SetPenColorBrickNumberTest.testPenColorShowDialog[negativeParametersTest]\n"
+		+ "SetPenColorBrickNumberTest.testPenColorShowDialog[positiveParametersTest]\n"
+		+ "CameraResourceTest.cameraOnTest\n"
+		+ "SceneTransitionWithVibrationBrickStageTest.testVibrationContinueOnSceneTransition\n"
+		+ "StageResourceFailedTest.testResourceFailedDialog\n"
+		+ "ImportLocalSpriteTest.importActorOrObjectTest\n"
+		+ "TouchesEdgeTest.testNoCollisionInCenter")
 public class RerunFailedJenkinsTestsSuite {
 }

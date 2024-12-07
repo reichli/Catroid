@@ -34,9 +34,10 @@ import java.util.stream.Collectors;
 
 public class FilteredParameterizedRunner extends Parameterized {
 
-	private final List<List<String>> methods;
+	private final List<FilteredTestRunner.FailedTest> methods;
 
-	public FilteredParameterizedRunner(Class<?> klass, List<List<String>> methods) throws Throwable {
+	public FilteredParameterizedRunner(
+			Class<?> klass, List<FilteredTestRunner.FailedTest> methods) throws Throwable {
 		super(klass);
 		this.methods = methods;
 	}
@@ -54,12 +55,11 @@ public class FilteredParameterizedRunner extends Parameterized {
 				continue;
 			}
 
-			String paramName = parameterizedRunner.getDescription().getDisplayName()
+			String parameterName = parameterizedRunner.getDescription().getDisplayName()
 					.replace("[", "")
 					.replace("]", "");
-			List<List<String>> filteredMethods = methods
-					.stream()
-					.filter(l -> l.contains(paramName))
+			List<FilteredTestRunner.FailedTest> filteredMethods = methods.stream()
+					.filter(t -> parameterName.contentEquals(t.getParameterVariant()))
 					.collect(Collectors.toList());
 
 			if (filteredMethods.isEmpty()) {

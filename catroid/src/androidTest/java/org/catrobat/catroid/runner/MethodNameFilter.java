@@ -31,11 +31,11 @@ import org.junit.runner.manipulation.Filter;
 import java.util.List;
 
 public class MethodNameFilter extends Filter {
-	private final List<List<String>> methodNames;
+	private final List<FilteredTestRunner.FailedTest> methods;
 
-	public MethodNameFilter(List<List<String>> methodNames)	{
+	public MethodNameFilter(List<FilteredTestRunner.FailedTest> methods)	{
 		super();
-		this.methodNames = methodNames;
+		this.methods = methods;
 	}
 
 	@Override
@@ -45,14 +45,9 @@ public class MethodNameFilter extends Filter {
 		if (paramIndex != -1) {
 			methodName = methodName.replace(methodName.substring(paramIndex), "");
 		}
-		Log.i("FLAKY-TESTS", "filter for test: " + methodName);
+		String finalMethodName = methodName;
 
-		for (List<String> methodToRun : this.methodNames)	{
-			if (methodToRun.get(0).equalsIgnoreCase(methodName)) {
-				return true;
-			}
-		}
-		return false;
+		return methods.stream().anyMatch(t -> finalMethodName.contentEquals(t.getMethodName()));
 	}
 
 	@Override

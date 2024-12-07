@@ -27,7 +27,6 @@ import android.util.Log;
 
 import org.junit.runner.Description;
 import org.junit.runner.RunWith;
-import org.junit.runner.manipulation.Filter;
 import org.junit.runner.notification.RunNotifier;
 import org.junit.runners.BlockJUnit4ClassRunner;
 import org.junit.runners.Parameterized;
@@ -39,8 +38,8 @@ import java.util.Dictionary;
 import java.util.Enumeration;
 import java.util.Hashtable;
 import java.util.List;
-import java.util.Objects;
 
+import androidx.annotation.NonNull;
 import androidx.test.platform.app.InstrumentationRegistry;
 import dalvik.system.DexFile;
 
@@ -48,7 +47,7 @@ public class FilteredTestRunner extends ParentRunner<ParentRunner> {
 
 	private static final String TAG = FilteredTestRunner.class.getSimpleName();
 
-	private final Dictionary<String, List<List<String>>> tests;
+	private final Dictionary<String, List<FailedTest>> tests;
 	private final List<ParentRunner> children;
 	private PackagePath pathAnnotation;
 	private FailedTests failedTestsAnnotation;
@@ -76,56 +75,30 @@ public class FilteredTestRunner extends ParentRunner<ParentRunner> {
 		}
 	}
 
-	private Dictionary<String, List<List<String>>> getTestMethodsToRun() {
-		Dictionary<String, List<List<String>>> tests = new Hashtable<>();
+	private Dictionary<String, List<FailedTest>> getTestMethodsToRun() {
+		Dictionary<String, List<FailedTest>> groupedTests = new Hashtable<>();
 
-		for (String test : failedTestsAnnotation.value().split("\n")) {
-			String[] parts = test.split("\\.");
-			String className = parts[0];
-			String methodName = parts[1];
-			List<String> methodData;
+		List<FailedTest> tests = new JenkinsResultParser()
+				.parseTests(List.of(failedTestsAnnotation.value().split("\n")));
 
-			if (methodName.contains("[")) {
-				String[] methodParts = parts[1].split("\\[");
-				methodName = methodParts[0];
-				String parameterName = methodParts[1].replace("]", "");
-
-				if (className.equalsIgnoreCase("CatrobatTestRunner")) {
-					parameterName += ".catrobat";
-				}
-
-				methodData = List.of(methodName, parameterName);
-			} else {
-				methodData = List.of(methodName);
+		for (FailedTest test : tests) {
+			List<FailedTest> testsForClass = groupedTests.get(test.className);
+			if (testsForClass == null) {
+				testsForClass = new ArrayList<>();
+				groupedTests.put(test.className, testsForClass);
 			}
-
-			List<List<String>> testMethods = tests.get(className);
-			if (testMethods == null) {
-				testMethods = new ArrayList<>();
-				tests.put(className, testMethods);
-			}
-			testMethods.add(methodData);
+			testsForClass.add(test);
 		}
 
-		Enumeration<String> iter = tests.keys();
-		while (iter.hasMoreElements()) {
-			String className = iter.nextElement();
-			String methodNames = Objects.requireNonNull(tests.get(className))
-					.stream()
-					.map(l -> String.join("->", l))
-					.reduce("", (accum, n) -> accum + ", " + n)
-					.replaceFirst(",", "");
-
-			Log.i("FLAKY-TESTS", className + ": " + methodNames);
-		}
-
-		return tests;
+		return groupedTests;
 	}
 
 	private List<ParentRunner> getChildRunners() throws InitializationError {
 		List<ParentRunner> runners = new ArrayList<>();
 
 		try {
+			// maybe change this to also rerun unit tests? here we are getting the package
+			// where the instrumented test is run.
 			String packageCodePath =
 					InstrumentationRegistry.getInstrumentation().getContext().getPackageCodePath();
 			DexFile dexFile = new DexFile(packageCodePath);
@@ -136,25 +109,22 @@ public class FilteredTestRunner extends ParentRunner<ParentRunner> {
 				String[] parts = fullyQualifiedClassName.split("\\.");
 				String className = parts[parts.length - 1];
 
-				if (fullyQualifiedClassName.contains(pathAnnotation.value())
-						&& (className.endsWith("Test") || className.equalsIgnoreCase(
-								"CatrobatTestRunner"))
-						&& tests.get(className) != null) {
+				if (!fullyQualifiedClassName.contains(pathAnnotation.value()) ||
+					tests.get(className) == null ||
+					(!className.endsWith("Test") && !className.contentEquals("CatrobatTestRunner"))) {
+					continue;
+				}
 
-					Log.i("FLAKY-TESTS", "test class matched: "
-							+ fullyQualifiedClassName + " - " + className);
+				List<FailedTest> testsToRerun = tests.get(className);
+				Class<?> testClass = Class.forName(fullyQualifiedClassName);
+				RunWith runWithAnnotation = testClass.getAnnotation(RunWith.class);
 
-					List<List<String>> methods = tests.get(className);
-
-					Class<?> testClass = Class.forName(fullyQualifiedClassName);
-					RunWith runWithAnnotation = testClass.getAnnotation(RunWith.class);
-					if (runWithAnnotation != null && runWithAnnotation.value() == Parameterized.class) {
-						runners.add(new FilteredParameterizedRunner(testClass, methods));
-					} else {
-						BlockJUnit4ClassRunner classRunner = new BlockJUnit4ClassRunner(testClass);
-						classRunner.filter(new MethodNameFilter(methods));
-						runners.add(classRunner);
-					}
+				if (runWithAnnotation != null && runWithAnnotation.value() == Parameterized.class) {
+					runners.add(new FilteredParameterizedRunner(testClass, testsToRerun));
+				} else {
+					BlockJUnit4ClassRunner classRunner = new BlockJUnit4ClassRunner(testClass);
+					classRunner.filter(new MethodNameFilter(testsToRerun));
+					runners.add(classRunner);
 				}
 			}
 		} catch (Throwable t) {
@@ -178,6 +148,63 @@ public class FilteredTestRunner extends ParentRunner<ParentRunner> {
 	@Override
 	protected void runChild(ParentRunner child, RunNotifier notifier) {
 		child.run(notifier);
+	}
+
+	class JenkinsResultParser {
+		public List<FailedTest> parseTests(List<String> jenkinsOutput) {
+			// adapt this to also parse the whole input from Jenkins with fully qualified names
+			List<FailedTest> tests = new ArrayList<>();
+			for (String line : jenkinsOutput) {
+				String[] parts = line.split("\\.", 2);
+				String className = parts[0];
+				String methodName = parts[1];
+				String parameterName = "";
+
+				if (methodName.contains("[")) {
+					String[] methodParts = methodName.split("\\[");
+					methodName = methodParts[0];
+					parameterName = methodParts[1].replace("]", "");
+
+					if (className.equalsIgnoreCase("CatrobatTestRunner")) {
+						parameterName += ".catrobat";
+					}
+				}
+
+				tests.add(new FailedTest(className, methodName, parameterName));
+			}
+
+			return tests;
+		}
+	}
+
+	class FailedTest {
+		private final String className;
+		private final String methodName;
+		private final String parameterVariant;
+
+		public FailedTest(String testClass, String methodName, String variant) {
+			this.className = testClass;
+			this.methodName = methodName;
+			this.parameterVariant = variant;
+		}
+
+		@NonNull
+		@Override
+		public String toString() {
+			return this.className + ";" + this.methodName + ";" + this.parameterVariant;
+		}
+
+		public String getClassName() {
+			return className;
+		}
+
+		public String getMethodName() {
+			return methodName;
+		}
+
+		public String getParameterVariant() {
+			return parameterVariant;
+		}
 	}
 }
 
