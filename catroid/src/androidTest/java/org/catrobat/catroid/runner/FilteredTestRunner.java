@@ -152,9 +152,17 @@ public class FilteredTestRunner extends ParentRunner<ParentRunner> {
 
 	class JenkinsResultParser {
 		public List<FailedTest> parseTests(List<String> jenkinsOutput) {
-			// adapt this to also parse the whole input from Jenkins with fully qualified names
 			List<FailedTest> tests = new ArrayList<>();
 			for (String line : jenkinsOutput) {
+				while (line.contains("/") && !line.startsWith("org.catrobat.catroid")) {
+					line = line.split("/", 2)[1].stripLeading();
+				}
+
+				while (!line.split("\\.")[0].endsWith("Test") &&
+						!line.startsWith("CatrobatTestRunner")) {
+					line = line.split("\\.", 2)[1];
+				}
+
 				String[] parts = line.split("\\.", 2);
 				String className = parts[0];
 				String methodName = parts[1];
@@ -165,7 +173,8 @@ public class FilteredTestRunner extends ParentRunner<ParentRunner> {
 					methodName = methodParts[0];
 					parameterName = methodParts[1].replace("]", "");
 
-					if (className.equalsIgnoreCase("CatrobatTestRunner")) {
+					if (className.equalsIgnoreCase("CatrobatTestRunner") &&
+						!parameterName.endsWith(".catrobat")) {
 						parameterName += ".catrobat";
 					}
 				}
