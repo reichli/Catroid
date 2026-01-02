@@ -23,8 +23,10 @@
 
 package org.catrobat.catroid.runner;
 
+import org.catrobat.catroid.test.BricksHelpUrlTest;
 import org.catrobat.catroid.test.catblocks.ScriptSplitUserDefinedBrickTest;
 import org.catrobat.catroid.test.content.actions.StopSoundActionTest;
+import org.catrobat.catroid.uiespresso.content.brick.app.PhiroColorBrickFormulaTest;
 import org.catrobat.catroid.uiespresso.content.brick.stage.SceneTransitionWithSoundBrickStageTest;
 import org.catrobat.catroid.uiespresso.content.brick.stage.SceneTransitionWithVibrationBrickStageTest;
 import org.junit.Test;
@@ -150,6 +152,17 @@ public class FilteredTestRunnerTest {
 		List<ParentRunner> runners =
 				new FilteredTestRunner(ParameterizedTestRunner.class).getChildren();
 
+		assertThat(runners.size(), is(2));
+
+		assertThat(runners.get(0), is(instanceOf(FilteredParameterizedRunner.class)));
+		assertEquals(
+				BricksHelpUrlTest.class,
+				runners.get(0).getDescription().getTestClass());
+		assertThat(
+				runners.get(0).getDescription().getChildren().get(0).getChildren().get(0).getMethodName(),
+				is("testBrickHelpUrl[org.catrobat.catroid.content.bricks.StartPlotBrick]"));
+
+		//PhiroColorBrickFormulaTest.class,
 	}
 
 	public List<String> getTestMethods(ParentRunner runner) {
