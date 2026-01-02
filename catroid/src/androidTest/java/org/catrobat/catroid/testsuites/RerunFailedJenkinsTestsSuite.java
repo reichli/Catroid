@@ -30,17 +30,17 @@ import org.junit.runner.RunWith;
 
 @RunWith(FilteredTestRunner.class)
 @PackagePath("org.catrobat.catroid")
-@FailedTests(
+@FailedTests({
 		// Espresso Tests, Instrumented Unit Tests and CLTs (directly from Jenkins output)
-		"All / 2 / Pull Request Suite / org.catrobat.catroid.uiespresso.content.brick.app.PhiroColorBrickFormulaTest.testPhiroLightRGBShowFormulaEditor[plusTest]\n"
-		+ "All / 2 / Pull Request Suite / org.catrobat.catroid.uiespresso.content.brick.stage.SceneTransitionWithSoundBrickStageTest.testContinueSoundDoesNotStartFromBeginning\n"
-		+ "All / 1 / Instrumented Unit Tests / org.catrobat.catroid.test.BricksHelpUrlTest.testBrickHelpUrl[org.catrobat.catroid.content.bricks.StartPlotBrick]\n"
-		+ "All / 1 / Instrumented Unit Tests / org.catrobat.catroid.test.catblocks.ScriptSplitUserDefinedBrickTest.testSplitUserDefinedBrick\n"
-		+ "All / 1 / Testrunner Tests / org.catrobat.catroid.catrobattestrunner.CatrobatTestRunner.run[catrobatTests/bricks/embroidery/WriteEmbroideryToFile - testEmbroiderySaved.catrobat]\n"
+		"All / 2 / Pull Request Suite / org.catrobat.catroid.uiespresso.content.brick.app.PhiroColorBrickFormulaTest.testPhiroLightRGBShowFormulaEditor[plusTest]",
+		"All / 2 / Pull Request Suite / org.catrobat.catroid.uiespresso.content.brick.stage.SceneTransitionWithSoundBrickStageTest.testContinueSoundDoesNotStartFromBeginning",
+		"All / 1 / Instrumented Unit Tests / org.catrobat.catroid.test.BricksHelpUrlTest.testBrickHelpUrl[org.catrobat.catroid.content.bricks.StartPlotBrick]",
+		"All / 1 / Instrumented Unit Tests / org.catrobat.catroid.test.catblocks.ScriptSplitUserDefinedBrickTest.testSplitUserDefinedBrick",
+		"All / 1 / Testrunner Tests / org.catrobat.catroid.catrobattestrunner.CatrobatTestRunner.run[catrobatTests/bricks/embroidery/WriteEmbroideryToFile - testEmbroiderySaved.catrobat]",
 		// ... or just with the class names
-		+ "PhiroColorBrickFormulaTest.testPhiroLightRGBShowFormulaEditor[minusTest]\n"
-		+ "SceneTransitionWithVibrationBrickStageTest.testVibrationContinueOnSceneTransition\n"
-		+ "BricksHelpUrlTest.testBrickHelpUrl[org.catrobat.catroid.content.bricks.SavePlotBrick]\n"
-		+ "StopSoundActionTest.testStopSimultaneousPlayingSounds\n")
+		"PhiroColorBrickFormulaTest.testPhiroLightRGBShowFormulaEditor[minusTest]",
+		"SceneTransitionWithVibrationBrickStageTest.testVibrationContinueOnSceneTransition",
+		"BricksHelpUrlTest.testBrickHelpUrl[org.catrobat.catroid.content.bricks.SavePlotBrick]",
+		"StopSoundActionTest.testStopSimultaneousPlayingSounds"})
 public class RerunFailedJenkinsTestsSuite {
 }

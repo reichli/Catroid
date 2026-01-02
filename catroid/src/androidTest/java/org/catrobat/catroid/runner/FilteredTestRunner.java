@@ -78,7 +78,7 @@ public class FilteredTestRunner extends ParentRunner<ParentRunner> {
 		Dictionary<String, List<Test>> groupedTests = new Hashtable<>();
 
 		List<Test> tests = new JenkinsResultParser()
-				.parseTests(List.of(failedTestsAnnotation.value().split("\n")));
+				.parseTests(List.of(failedTestsAnnotation.value()));
 
 		for (Test test : tests) {
 			List<Test> testsForClass = groupedTests.get(test.getClassName());
