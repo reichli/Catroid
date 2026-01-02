@@ -54,7 +54,7 @@ public class FilteredTestRunner extends ParentRunner<ParentRunner> {
 	public FilteredTestRunner(Class<?> suite) throws InitializationError {
 		super(suite);
 		setAnnotations(suite);
-		this.tests = getTestToReRun();
+		this.tests = getTest();
 		this.children = getChildRunners();
 	}
 
@@ -74,7 +74,7 @@ public class FilteredTestRunner extends ParentRunner<ParentRunner> {
 		}
 	}
 
-	private Map<String, List<Test>> getTestToReRun() {
+	private Map<String, List<Test>> getTest() {
 		return new JenkinsResultParser()
 				.parseTests(List.of(failedTestsAnnotation.value()))
 				.stream()
@@ -139,38 +139,53 @@ public class FilteredTestRunner extends ParentRunner<ParentRunner> {
 	}
 
 	class JenkinsResultParser {
-		public List<Test> parseTests(List<String> jenkinsOutput) {
-			List<Test> tests = new ArrayList<>();
-			for (String line : jenkinsOutput) {
-				while (line.contains("/") && !line.startsWith("org.catrobat.catroid")) {
-					line = line.split("/", 2)[1].stripLeading();
-				}
-
-				while (!line.split("\\.")[0].endsWith("Test") &&
-						!line.startsWith("CatrobatTestRunner")) {
-					line = line.split("\\.", 2)[1];
-				}
-
-				String[] parts = line.split("\\.", 2);
-				String className = parts[0];
-				String methodName = parts[1];
-				String parameterName = "";
-
-				if (methodName.contains("[")) {
-					String[] methodParts = methodName.split("\\[");
-					methodName = methodParts[0];
-					parameterName = methodParts[1].replace("]", "");
-
-					if (className.equalsIgnoreCase("CatrobatTestRunner") &&
-						!parameterName.endsWith(".catrobat")) {
-						parameterName += ".catrobat";
-					}
-				}
-
-				tests.add(new Test(className, methodName, parameterName));
+		private String removeJenkinsPrefixes(String line) {
+			while (line.contains("/") && !line.startsWith("org.catrobat.catroid")) {
+				line = line.split("/", 2)[1].stripLeading();
 			}
 
-			return tests;
+			return line;
+		}
+
+		private String removePackagePath(String line) {
+			while (!line.split("\\.")[0].endsWith("Test") &&
+					!line.startsWith("CatrobatTestRunner")) {
+				line = line.split("\\.", 2)[1];
+			}
+
+			return line;
+		}
+
+		private Test mapToTest(String line) {
+			String[] parts = line.split("\\.", 2);
+			String className = parts[0];
+			String method = parts[1];
+			String methodName;
+			String argumentSet;
+
+			if (method.contains("[")) {
+				String[] methodParts = method.split("\\[");
+				methodName = methodParts[0];
+				argumentSet = methodParts[1].replace("]", "");
+
+				if (className.equalsIgnoreCase("CatrobatTestRunner") &&
+						!argumentSet.endsWith(".catrobat")) {
+					argumentSet += ".catrobat";
+				}
+			} else {
+				methodName = method;
+				argumentSet = "";
+			}
+
+			return new Test(className, methodName, argumentSet);
+		}
+
+		public List<Test> parseTests(List<String> jenkinsOutput) {
+			return jenkinsOutput.stream()
+					.map(this::removeJenkinsPrefixes)
+					.map(this::removePackagePath)
+					.map(this::mapToTest)
+					.collect(Collectors.toList());
 		}
 	}
 }
