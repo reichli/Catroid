@@ -34,10 +34,10 @@ import org.junit.runners.ParentRunner;
 import org.junit.runners.model.InitializationError;
 
 import java.util.ArrayList;
-import java.util.Dictionary;
 import java.util.Enumeration;
-import java.util.Hashtable;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 import androidx.test.platform.app.InstrumentationRegistry;
 import dalvik.system.DexFile;
@@ -46,7 +46,7 @@ public class FilteredTestRunner extends ParentRunner<ParentRunner> {
 
 	private static final String TAG = FilteredTestRunner.class.getSimpleName();
 
-	private final Dictionary<String, List<Test>> tests;
+	private final Map<String, List<Test>> tests;
 	private final List<ParentRunner> children;
 	private PackagePath pathAnnotation;
 	private FailedTests failedTestsAnnotation;
@@ -54,7 +54,7 @@ public class FilteredTestRunner extends ParentRunner<ParentRunner> {
 	public FilteredTestRunner(Class<?> suite) throws InitializationError {
 		super(suite);
 		setAnnotations(suite);
-		this.tests = getTestMethodsToRun();
+		this.tests = getTestToReRun();
 		this.children = getChildRunners();
 	}
 
@@ -74,22 +74,11 @@ public class FilteredTestRunner extends ParentRunner<ParentRunner> {
 		}
 	}
 
-	private Dictionary<String, List<Test>> getTestMethodsToRun() {
-		Dictionary<String, List<Test>> groupedTests = new Hashtable<>();
-
-		List<Test> tests = new JenkinsResultParser()
-				.parseTests(List.of(failedTestsAnnotation.value()));
-
-		for (Test test : tests) {
-			List<Test> testsForClass = groupedTests.get(test.getClassName());
-			if (testsForClass == null) {
-				testsForClass = new ArrayList<>();
-				groupedTests.put(test.getClassName(), testsForClass);
-			}
-			testsForClass.add(test);
-		}
-
-		return groupedTests;
+	private Map<String, List<Test>> getTestToReRun() {
+		return new JenkinsResultParser()
+				.parseTests(List.of(failedTestsAnnotation.value()))
+				.stream()
+				.collect(Collectors.groupingBy(Test::getClassName));
 	}
 
 	private List<ParentRunner> getChildRunners() throws InitializationError {
@@ -107,14 +96,14 @@ public class FilteredTestRunner extends ParentRunner<ParentRunner> {
 				String fullyQualifiedClassName = iter.nextElement();
 				String[] parts = fullyQualifiedClassName.split("\\.");
 				String className = parts[parts.length - 1];
+				List<Test> testsToRerun = tests.get(className);
 
 				if (!fullyQualifiedClassName.contains(pathAnnotation.value()) ||
-					tests.get(className) == null ||
+					testsToRerun == null ||
 					(!className.endsWith("Test") && !className.contentEquals("CatrobatTestRunner"))) {
 					continue;
 				}
 
-				List<Test> testsToRerun = tests.get(className);
 				Class<?> testClass = Class.forName(fullyQualifiedClassName);
 				RunWith runWithAnnotation = testClass.getAnnotation(RunWith.class);
 
