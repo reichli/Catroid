@@ -79,14 +79,12 @@ public class FilteredTestRunnerTest {
 			"BricksHelpUrlTest.testBrickHelpUrl[org.catrobat.catroid.content.bricks.StartPlotBrick]"})
 	class ParameterizedTestRunner {}
 
-	/*
-	* Instrumented Unit Test (x)
-	* Pull Request Suite (x)
-	* CLT (pending)
-	* Multiple Test Methods (x)
-	* Parameterized Test
-	* Correctly consider Jenkins Output
-	 */
+	@PackagePath("org.catrobat.catroid")
+	@FailedTests({
+			"All / 2 / Pull Request Suite / org.catrobat.catroid.uiespresso.content.brick.stage.SceneTransitionWithSoundBrickStageTest.testContinueSoundDoesNotStartFromBeginning",
+			"All / 1 / Instrumented Unit Tests / org.catrobat.catroid.test.catblocks.ScriptSplitUserDefinedBrickTest.testSplitUserDefinedBrick",
+	})
+	class JenkinsOutputTestRunner {}
 
 	@Test
 	public void testInstrumentedUnitTest() throws InitializationError {
@@ -193,6 +191,31 @@ public class FilteredTestRunnerTest {
 				containsInAnyOrder(
 						"testPhiroLightRGBShowDialog[positiveParametersTest]",
 						"testPhiroLightRGBValuesWithColorPicker[positiveParametersTest]"));
+	}
+
+	@Test
+	public void testStripJenkinsPrefix() throws InitializationError {
+		List<ParentRunner> runners =
+				new FilteredTestRunner(JenkinsOutputTestRunner.class).getChildren();
+
+		assertThat(runners.size(), is(2));
+
+		assertThat(runners.get(0), is(instanceOf(BlockJUnit4ClassRunner.class)));
+		assertEquals(
+				ScriptSplitUserDefinedBrickTest.class,
+				runners.get(0).getDescription().getTestClass());
+		assertThat(
+				getTestMethods(runners.get(0)),
+				containsInAnyOrder("testSplitUserDefinedBrick")
+		);
+
+		assertThat(runners.get(1), is(instanceOf(BlockJUnit4ClassRunner.class)));
+		assertEquals(
+				SceneTransitionWithSoundBrickStageTest.class,
+				runners.get(1).getDescription().getTestClass());
+		assertThat(
+				getTestMethods(runners.get(1)),
+				containsInAnyOrder("testContinueSoundDoesNotStartFromBeginning"));
 	}
 
 	public List<String> getTestMethods(ParentRunner runner) {
