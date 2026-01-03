@@ -27,6 +27,7 @@ import org.catrobat.catroid.test.BricksHelpUrlTest;
 import org.catrobat.catroid.test.catblocks.ScriptSplitUserDefinedBrickTest;
 import org.catrobat.catroid.test.content.actions.StopSoundActionTest;
 import org.catrobat.catroid.uiespresso.content.brick.app.PhiroColorBrickFormulaTest;
+import org.catrobat.catroid.uiespresso.content.brick.app.PhiroColorBrickNumberTest;
 import org.catrobat.catroid.uiespresso.content.brick.stage.SceneTransitionWithSoundBrickStageTest;
 import org.catrobat.catroid.uiespresso.content.brick.stage.SceneTransitionWithVibrationBrickStageTest;
 import org.junit.Test;
@@ -71,8 +72,10 @@ public class FilteredTestRunnerTest {
 
 	@PackagePath("org.catrobat.catroid")
 	@FailedTests({
-			"PhiroColorBrickFormulaTest.testPhiroLightRGBShowFormulaEditor[plusTest]",
-			"PhiroColorBrickFormulaTest.testPhiroLightRGBShowFormulaEditor[minusTest]",
+			"PhiroColorBrickNumberTest.testPhiroLightRGBShowDialog[negativeParametersTest]",
+			"PhiroColorBrickNumberTest.testPhiroLightRGBValuesWithColorPicker[negativeParametersTest]",
+			"PhiroColorBrickNumberTest.testPhiroLightRGBShowDialog[positiveParametersTest]",
+			"PhiroColorBrickNumberTest.testPhiroLightRGBValuesWithColorPicker[positiveParametersTest]",
 			"BricksHelpUrlTest.testBrickHelpUrl[org.catrobat.catroid.content.bricks.StartPlotBrick]"})
 	class ParameterizedTestRunner {}
 
@@ -159,10 +162,37 @@ public class FilteredTestRunnerTest {
 				BricksHelpUrlTest.class,
 				runners.get(0).getDescription().getTestClass());
 		assertThat(
-				runners.get(0).getDescription().getChildren().get(0).getChildren().get(0).getMethodName(),
-				is("testBrickHelpUrl[org.catrobat.catroid.content.bricks.StartPlotBrick]"));
+				runners.get(0).getDescription().getChildren().get(0).getDisplayName(),
+				is("[org.catrobat.catroid.content.bricks.StartPlotBrick]"));
+		assertThat(
+				runners.get(0).getDescription().getChildren().get(0).getChildren().stream().map(Description::getMethodName).collect(Collectors.toList()),
+				containsInAnyOrder("testBrickHelpUrl[org.catrobat.catroid.content.bricks.StartPlotBrick]"));
 
-		//PhiroColorBrickFormulaTest.class,
+		assertThat(runners.get(0), is(instanceOf(FilteredParameterizedRunner.class)));
+
+		assertThat(runners.get(1), is(instanceOf(FilteredParameterizedRunner.class)));
+		assertEquals(
+				PhiroColorBrickNumberTest.class,
+				runners.get(1).getDescription().getTestClass());
+		assertThat(runners.get(1).getDescription().getChildren().size(), is(2));
+
+		assertThat(
+				runners.get(1).getDescription().getChildren().get(0).getDisplayName(),
+				is("[negativeParametersTest]"));
+		assertThat(
+				runners.get(1).getDescription().getChildren().get(0).getChildren().stream().map(Description::getMethodName).collect(Collectors.toList()),
+				containsInAnyOrder(
+						"testPhiroLightRGBShowDialog[negativeParametersTest]",
+						"testPhiroLightRGBValuesWithColorPicker[negativeParametersTest]"));
+
+		assertThat(
+				runners.get(1).getDescription().getChildren().get(1).getDisplayName(),
+				is("[positiveParametersTest]"));
+		assertThat(
+				runners.get(1).getDescription().getChildren().get(1).getChildren().stream().map(Description::getMethodName).collect(Collectors.toList()),
+				containsInAnyOrder(
+						"testPhiroLightRGBShowDialog[positiveParametersTest]",
+						"testPhiroLightRGBValuesWithColorPicker[positiveParametersTest]"));
 	}
 
 	public List<String> getTestMethods(ParentRunner runner) {
