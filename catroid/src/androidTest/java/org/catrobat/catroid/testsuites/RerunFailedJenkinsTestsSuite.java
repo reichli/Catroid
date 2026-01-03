@@ -31,8 +31,17 @@ import org.junit.runner.RunWith;
 @RunWith(FilteredTestRunner.class)
 @PackagePath("org.catrobat.catroid")
 @FailedTests({
-		"PhiroColorBrickFormulaTest.testPhiroLightRGBShowFormulaEditor[plusTest]",
+		// Espresso Tests, Instrumented Unit Tests and CLTs (directly from Jenkins output)
+		"All / 2 / Pull Request Suite / org.catrobat.catroid.uiespresso.content.brick.app.PhiroColorBrickFormulaTest.testPhiroLightRGBShowFormulaEditor[plusTest]",
+		"All / 2 / Pull Request Suite / org.catrobat.catroid.uiespresso.content.brick.stage.SceneTransitionWithSoundBrickStageTest.testContinueSoundDoesNotStartFromBeginning",
+		"All / 1 / Instrumented Unit Tests / org.catrobat.catroid.test.BricksHelpUrlTest.testBrickHelpUrl[org.catrobat.catroid.content.bricks.StartPlotBrick]",
+		"All / 1 / Instrumented Unit Tests / org.catrobat.catroid.test.catblocks.ScriptSplitUserDefinedBrickTest.testSplitUserDefinedBrick",
+		// For CLTs we need the Jenkins output. Supplying only the CLT filename is not yet supported
+		"All / 1 / Testrunner Tests / org.catrobat.catroid.catrobattestrunner.CatrobatTestRunner.run[catrobatTests/bricks/embroidery/WriteEmbroideryToFile - testEmbroiderySaved.catrobat]",
+		// ... or just with the class names
 		"PhiroColorBrickFormulaTest.testPhiroLightRGBShowFormulaEditor[minusTest]",
-		"BricksHelpUrlTest.testBrickHelpUrl[org.catrobat.catroid.content.bricks.StartPlotBrick]"})
+		"SceneTransitionWithVibrationBrickStageTest.testVibrationContinueOnSceneTransition",
+		"BricksHelpUrlTest.testBrickHelpUrl[org.catrobat.catroid.content.bricks.SavePlotBrick]",
+		"StopSoundActionTest.testStopSimultaneousPlayingSounds"})
 public class RerunFailedJenkinsTestsSuite {
 }

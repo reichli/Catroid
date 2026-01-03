@@ -23,6 +23,7 @@
 
 package org.catrobat.catroid.runner;
 
+import org.catrobat.catroid.catrobattestrunner.CatrobatTestRunner;
 import org.catrobat.catroid.test.BricksHelpUrlTest;
 import org.catrobat.catroid.test.catblocks.ScriptSplitUserDefinedBrickTest;
 import org.catrobat.catroid.test.content.actions.StopSoundActionTest;
@@ -61,7 +62,8 @@ public class FilteredTestRunnerTest {
 	class PullRequestTestSuiteRunner {}
 
 	@PackagePath("org.catrobat.catroid")
-	@FailedTests({"testEmbroiderySaved.catrobat"})
+	@FailedTests({
+			"All / 1 / Testrunner Tests / org.catrobat.catroid.catrobattestrunner.CatrobatTestRunner.run[catrobatTests/bricks/embroidery/WriteEmbroideryToFile - testEmbroiderySaved.catrobat]"})
 	class CatrobatLanguageTestRunner {}
 
 	@PackagePath("org.catrobat.catroid")
@@ -124,6 +126,15 @@ public class FilteredTestRunnerTest {
 				new FilteredTestRunner(CatrobatLanguageTestRunner.class).getChildren();
 
 		assertThat(runners.size(), is(1));
+
+		assertThat(runners.get(0), is(instanceOf(FilteredParameterizedRunner.class)));
+		assertEquals(CatrobatTestRunner.class, runners.get(0).getDescription().getTestClass());
+		assertThat(
+				runners.get(0).getDescription().getChildren().get(0).getDisplayName(),
+				is("[catrobatTests/bricks/embroidery/WriteEmbroideryToFile - testEmbroiderySaved.catrobat]"));
+		assertThat(
+				runners.get(0).getDescription().getChildren().get(0).getChildren().stream().map(Description::getMethodName).collect(Collectors.toList()),
+				containsInAnyOrder("run[catrobatTests/bricks/embroidery/WriteEmbroideryToFile - testEmbroiderySaved.catrobat]"));
 	}
 
 	@Test
